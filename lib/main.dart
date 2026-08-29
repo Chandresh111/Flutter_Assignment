@@ -1,12 +1,8 @@
 import 'dart:io';
 
-// ==========================================
 // LIBRARY MANAGEMENT SYSTEM
-// ==========================================
 
-// ==========================================
 // 1. BOOK CLASS
-// ==========================================
 
 class Book {
   String title;
@@ -27,9 +23,7 @@ class Book {
   }
 }
 
-// ==========================================
 // 2. MEMBER CLASS
-// ==========================================
 
 class Member {
   String name;
@@ -59,9 +53,7 @@ class Member {
   }
 }
 
-// ==========================================
 // 3. INHERITANCE
-// ==========================================
 
 class PremiumMember extends Member {
   PremiumMember({
@@ -75,9 +67,7 @@ class PremiumMember extends Member {
   }
 }
 
-// ==========================================
 // 4. LIBRARY CLASS
-// ==========================================
 
 class Library {
   String name;
@@ -119,15 +109,13 @@ class Library {
   }
 }
 
-// ==========================================
 // MAIN PROGRAM
-// ==========================================
-
 
 void main() {
   Library library = Library('City Central Library');
 
-  // Create books
+  // CREATE 10 BOOKS
+
   Book book1 = Book(
     title: 'The Alchemist',
     author: 'Paulo Coelho',
@@ -143,25 +131,72 @@ void main() {
     author: 'Robert Martin',
   );
 
-  // Add books
+  Book book4 = Book(
+    title: 'The Great Gatsby',
+    author: 'F. Scott Fitzgerald',
+  );
+
+  Book book5 = Book(
+    title: 'To Kill a Mockingbird',
+    author: 'Harper Lee',
+  );
+
+  Book book6 = Book(
+    title: 'Atomic Habits',
+    author: 'James Clear',
+  );
+
+  Book book7 = Book(
+    title: 'The Psychology of Money',
+    author: 'Morgan Housel',
+  );
+
+  Book book8 = Book(
+    title: 'Rich Dad Poor Dad',
+    author: 'Robert Kiyosaki',
+  );
+
+  Book book9 = Book(
+    title: 'Harry Potter and the Sorcerer\'s Stone',
+    author: 'J. K. Rowling',
+  );
+
+  Book book10 = Book(
+    title: 'The Hobbit',
+    author: 'J. R. R. Tolkien',
+  );
+
+  // ADD ALL 10 BOOKS TO LIBRARY
+
   library.addBook(book1);
   library.addBook(book2);
   library.addBook(book3);
+  library.addBook(book4);
+  library.addBook(book5);
+  library.addBook(book6);
+  library.addBook(book7);
+  library.addBook(book8);
+  library.addBook(book9);
+  library.addBook(book10);
 
-  // Create members
+  // CREATE MEMBERS
+
   Member member1 = Member(
-    name: 'Alex',
+    name: 'Chandresh',
     memberId: 101,
   );
 
   PremiumMember member2 = PremiumMember(
-    name: 'John',
+    name: 'Akash',
     memberId: 102,
   );
 
-  // Register members
+  // REGISTER MEMBERS
+
   library.registerMember(member1);
   library.registerMember(member2);
+
+  // MENU LOOP
 
   bool running = true;
 
@@ -176,6 +211,7 @@ void main() {
     print('5. Show premium member');
     print('6. Exit');
     print('====================================');
+
     stdout.write('Enter your choice: ');
 
     String? choice = stdin.readLineSync();
