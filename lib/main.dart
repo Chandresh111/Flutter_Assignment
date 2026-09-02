@@ -1,249 +1,622 @@
-import 'dart:io';
+import 'package:flutter/material.dart';
 
-// LIBRARY MANAGEMENT SYSTEM
+void main() {
+  runApp(const MyApp());
+}
 
-// 1. BOOK CLASS
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
 
-class Book {
-  String title;
-  String author;
-  bool isAvailable;
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
 
-  Book({
-    required this.title,
-    required this.author,
-    this.isAvailable = true,
-  });
+class _MyAppState extends State<MyApp> {
+  bool isDark = false;
 
-  void displayBook() {
-    print(
-      'Title: $title | Author: $author | '
-      'Available: ${isAvailable ? "Yes" : "No"}',
+  void toggleTheme() {
+    setState(() {
+      isDark = !isDark;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Profile Card',
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF4F1FF),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6750A4),
+          brightness: Brightness.light,
+        ),
+      ),
+
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF15131A),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF9B7DDB),
+          brightness: Brightness.dark,
+        ),
+      ),
+
+      home: ProfilePage(
+        isDark: isDark,
+        onThemeToggle: toggleTheme,
+      ),
     );
   }
 }
 
-// 2. MEMBER CLASS
+class ProfilePage extends StatefulWidget {
+  final bool isDark;
+  final VoidCallback onThemeToggle;
 
-class Member {
-  String name;
-  int memberId;
-
-  Member({
-    required this.name,
-    required this.memberId,
+  const ProfilePage({
+    super.key,
+    required this.isDark,
+    required this.onThemeToggle,
   });
 
-  void displayMember() {
-    print('Member ID: $memberId | Name: $name');
-  }
-
-  void borrowBook(Book book) {
-    if (book.isAvailable) {
-      book.isAvailable = false;
-      print('$name borrowed "${book.title}".');
-    } else {
-      print('"${book.title}" is not available.');
-    }
-  }
-
-  void returnBook(Book book) {
-    book.isAvailable = true;
-    print('$name returned "${book.title}".');
-  }
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-// 3. INHERITANCE
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController animationController;
+  late Animation<double> fadeAnimation;
+  late Animation<Offset> slideAnimation;
 
-class PremiumMember extends Member {
-  PremiumMember({
-    required super.name,
-    required super.memberId,
-  });
+  bool isFollowing = false;
 
-  void showPremiumBenefit() {
-    print('$name is a Premium Member.');
-    print('Benefit: Premium members can borrow books for 30 days.');
-  }
-}
+  @override
+  void initState() {
+    super.initState();
 
-// 4. LIBRARY CLASS
+    animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
 
-class Library {
-  String name;
+    fadeAnimation = CurvedAnimation(
+      parent: animationController,
+      curve: Curves.easeOut,
+    );
 
-  // Lists to store books and members
-  List<Book> books = [];
-  List<Member> members = [];
+    slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: animationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
-  Library(this.name);
-
-  // Add a book
-  void addBook(Book book) {
-    books.add(book);
-    print('Book "${book.title}" added to the library.');
-  }
-
-  // Register a member
-  void registerMember(Member member) {
-    members.add(member);
-    print('Member "${member.name}" registered successfully.');
+    animationController.forward();
   }
 
-  // Display all books using a loop
-  void displayAllBooks() {
-    print('\n========== BOOK COLLECTION ==========');
-
-    for (Book book in books) {
-      book.displayBook();
-    }
+  @override
+  void dispose() {
+    animationController.dispose();
+    super.dispose();
   }
 
-  // Display all members using a loop
-  void displayAllMembers() {
-    print('\n========== LIBRARY MEMBERS ==========');
+  void showMessage(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-    for (Member member in members) {
-      member.displayMember();
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
-}
 
-// MAIN PROGRAM
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
-void main() {
-  Library library = Library('City Central Library');
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title: const Text(
+          'My Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Change theme',
+            onPressed: widget.onThemeToggle,
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Icon(
+                widget.isDark
+                    ? Icons.light_mode_rounded
+                    : Icons.dark_mode_rounded,
+                key: ValueKey(widget.isDark),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
 
-  // CREATE 10 BOOKS
+      body: FadeTransition(
+        opacity: fadeAnimation,
+        child: SlideTransition(
+          position: slideAnimation,
+          child: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  constraints: const BoxConstraints(
+                    maxWidth: 850,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 30,
+                        offset: const Offset(0, 15),
+                      ),
+                    ],
+                  ),
 
-  Book book1 = Book(
-    title: 'The Alchemist',
-    author: 'Paulo Coelho',
-  );
+                  child: Column(
+                    children: [
 
-  Book book2 = Book(
-    title: '1984',
-    author: 'George Orwell',
-  );
+                      // -------------------------
+                      // HEADER
+                      // -------------------------
 
-  Book book3 = Book(
-    title: 'Clean Code',
-    author: 'Robert Martin',
-  );
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(
+                          28,
+                          30,
+                          28,
+                          35,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              colors.primary,
+                              colors.secondary,
+                            ],
+                          ),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(30),
+                          ),
+                        ),
 
-  Book book4 = Book(
-    title: 'The Great Gatsby',
-    author: 'F. Scott Fitzgerald',
-  );
+                        child: Column(
+                          children: [
 
-  Book book5 = Book(
-    title: 'To Kill a Mockingbird',
-    author: 'Harper Lee',
-  );
+                            // Avatar
+                            Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 15,
+                                  ),
+                                ],
+                              ),
+                              child: CircleAvatar(
+                                radius: 55,
+                                backgroundColor:
+                                    colors.primaryContainer,
+                                child: Icon(
+                                  Icons.person_rounded,
+                                  size: 65,
+                                  color: colors.primary,
+                                ),
+                              ),
+                            ),
 
-  Book book6 = Book(
-    title: 'Atomic Habits',
-    author: 'James Clear',
-  );
+                            const SizedBox(height: 18),
 
-  Book book7 = Book(
-    title: 'The Psychology of Money',
-    author: 'Morgan Housel',
-  );
+                            const Text(
+                              'Chandresh Dubey',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
 
-  Book book8 = Book(
-    title: 'Rich Dad Poor Dad',
-    author: 'Robert Kiyosaki',
-  );
+                            const SizedBox(height: 6),
 
-  Book book9 = Book(
-    title: 'Harry Potter and the Sorcerer\'s Stone',
-    author: 'J. K. Rowling',
-  );
+                            Text(
+                              'Computer Science Student',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 15,
+                              ),
+                            ),
 
-  Book book10 = Book(
-    title: 'The Hobbit',
-    author: 'J. R. R. Tolkien',
-  );
+                            const SizedBox(height: 18),
 
-  // ADD ALL 10 BOOKS TO LIBRARY
+                            // Online status
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.18),
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.circle,
+                                    color: Colors.greenAccent,
+                                    size: 10,
+                                  ),
+                                  SizedBox(width: 7),
+                                  Text(
+                                    'Available for opportunities',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
-  library.addBook(book1);
-  library.addBook(book2);
-  library.addBook(book3);
-  library.addBook(book4);
-  library.addBook(book5);
-  library.addBook(book6);
-  library.addBook(book7);
-  library.addBook(book8);
-  library.addBook(book9);
-  library.addBook(book10);
+                      // -------------------------
+                      // CONTENT
+                      // -------------------------
 
-  // CREATE MEMBERS
+                      Padding(
+                        padding: const EdgeInsets.all(28),
 
-  Member member1 = Member(
-    name: 'Chandresh',
-    memberId: 101,
-  );
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
 
-  PremiumMember member2 = PremiumMember(
-    name: 'Akash',
-    memberId: 102,
-  );
+                            // Bio
+                            Text(
+                              'About Me',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
 
-  // REGISTER MEMBERS
+                            const SizedBox(height: 8),
 
-  library.registerMember(member1);
-  library.registerMember(member2);
+                            Text(
+                              'Passionate about software development, '
+                              'machine learning and building useful '
+                              'technology projects.',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                height: 1.5,
+                              ),
+                            ),
 
-  // MENU LOOP
+                            const SizedBox(height: 25),
 
-  bool running = true;
+                            // Contact information
+                            Text(
+                              'Contact Information',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
 
-  while (running) {
-    print('\n====================================');
-    print('      ${library.name}');
-    print('====================================');
-    print('1. Display all books');
-    print('2. Display all members');
-    print('3. Borrow a book');
-    print('4. Return a book');
-    print('5. Show premium member');
-    print('6. Exit');
-    print('====================================');
+                            const SizedBox(height: 15),
 
-    stdout.write('Enter your choice: ');
+                            Row(
+                              children: [
+                                _infoIcon(
+                                  context,
+                                  Icons.location_on_rounded,
+                                ),
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Text('Mumbai, India'),
+                                ),
+                              ],
+                            ),
 
-    String? choice = stdin.readLineSync();
+                            const SizedBox(height: 14),
 
-    switch (choice) {
-      case '1':
-        library.displayAllBooks();
-        break;
+                            Row(
+                              children: [
+                                _infoIcon(
+                                  context,
+                                  Icons.email_rounded,
+                                ),
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Text(
+                                    'chandreshdubey98@gmail.com',
+                                  ),
+                                ),
+                              ],
+                            ),
 
-      case '2':
-        library.displayAllMembers();
-        break;
+                            const SizedBox(height: 14),
 
-      case '3':
-        member1.borrowBook(book1);
-        break;
+                            Row(
+                              children: [
+                                _infoIcon(
+                                  context,
+                                  Icons.phone_rounded,
+                                ),
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Text('+91 83560 31853'),
+                                ),
+                              ],
+                            ),
 
-      case '4':
-        member1.returnBook(book1);
-        break;
+                            const SizedBox(height: 28),
 
-      case '5':
-        member2.showPremiumBenefit();
-        break;
+                            // Skills
+                            Text(
+                              'Skills',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
 
-      case '6':
-        print('\nThank you for using ${library.name}!');
-        running = false;
-        break;
+                            const SizedBox(height: 14),
 
-      default:
-        print('\nInvalid choice. Please try again.');
-    }
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                _skillChip(context, 'Flutter'),
+                                _skillChip(context, 'Dart'),
+                                _skillChip(context, 'Python'),
+                                _skillChip(context, 'Machine Learning'),
+                                _skillChip(context, 'Git'),
+                              ],
+                            ),
+
+                            const SizedBox(height: 30),
+
+                            // Statistics
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.primaryContainer
+                                    .withOpacity(0.45),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _stat(
+                                    context,
+                                    '12',
+                                    'Projects',
+                                  ),
+                                  _divider(context),
+                                  _stat(
+                                    context,
+                                    '8',
+                                    'Skills',
+                                  ),
+                                  _divider(context),
+                                  _stat(
+                                    context,
+                                    '3',
+                                    'Years',
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 28),
+
+                            // Buttons
+                            Row(
+                              children: [
+
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        isFollowing = !isFollowing;
+                                      });
+
+                                      showMessage(
+                                        isFollowing
+                                            ? 'You are now following Chandresh!'
+                                            : 'Unfollowed Chandresh.',
+                                      );
+                                    },
+                                    icon: Icon(
+                                      isFollowing
+                                          ? Icons.check_rounded
+                                          : Icons.person_add_rounded,
+                                    ),
+                                    label: Text(
+                                      isFollowing
+                                          ? 'Following'
+                                          : 'Follow',
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 15,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(15),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 12),
+
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      showMessage(
+                                        'Message feature selected.',
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.message_rounded,
+                                    ),
+                                    label: const Text('Message'),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 15,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(15),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // -------------------------
+  // Helper: Info Icon
+  // -------------------------
+
+  Widget _infoIcon(
+    BuildContext context,
+    IconData icon,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: colors.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        icon,
+        color: colors.primary,
+        size: 21,
+      ),
+    );
+  }
+
+  // -------------------------
+  // Helper: Skill Chip
+  // -------------------------
+
+  Widget _skillChip(
+    BuildContext context,
+    String skill,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 9,
+      ),
+      decoration: BoxDecoration(
+        color: colors.secondaryContainer,
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Text(
+        skill,
+        style: TextStyle(
+          color: colors.onSecondaryContainer,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+      ),
+    );
+  }
+
+  // -------------------------
+  // Helper: Statistics
+  // -------------------------
+
+  Widget _stat(
+    BuildContext context,
+    String number,
+    String label,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Column(
+      children: [
+        Text(
+          number,
+          style: TextStyle(
+            fontSize: 25,
+            fontWeight: FontWeight.bold,
+            color: colors.primary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+
+  // -------------------------
+  // Helper: Divider
+  // -------------------------
+
+  Widget _divider(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 40,
+      color: Theme.of(context)
+          .colorScheme
+          .outline
+          .withOpacity(0.3),
+    );
   }
 }
